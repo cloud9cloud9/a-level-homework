@@ -1,22 +1,10 @@
 package com.alevel_hw2;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ContactDAO {
-    private final String CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS contacts (" +
-            "id bigserial PRIMARY KEY," +
-            "contact VARCHAR(255)," +
-            "contact_type VARCHAR(255))";
-
-    private final String CREATE_CONTACT = "INSERT INTO contacts (contact, contact_type) VALUES (?, ?)";
-
-    private final String UPDATE_CONTACT = "UPDATE contacts SET contact = ?, contact_type = ? WHERE id = ?;";
-
-    private final String DELETE_CONTACT = "DELETE FROM contacts WHERE id = ?";
-
-    private final String READ_CONTACT = "SELECT * FROM contacts WHERE id = ?";
-
-    private final String READ_ALL_CONTACT = "SELECT * FROM contacts";
 
     private Connection getConnection() {
         try {
@@ -29,6 +17,10 @@ public class ContactDAO {
     }
 
     public void createTable() {
+        final String CREATE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS contacts (" +
+                "id bigserial PRIMARY KEY," +
+                "contact VARCHAR(255)," +
+                "contact_type VARCHAR(255))";
         try (Connection connection = getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement(CREATE_TABLE_QUERY);
             preparedStatement.executeUpdate();
@@ -38,6 +30,7 @@ public class ContactDAO {
     }
 
     public void createContact(String contact, String contact_type) {
+        final String CREATE_CONTACT = "INSERT INTO contacts (contact, contact_type) VALUES (?, ?)";
         try (Connection connection = getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement(CREATE_CONTACT);
 
@@ -50,7 +43,9 @@ public class ContactDAO {
         }
     }
 
-    public void readContact(long id) {
+    public List<Contact> readContact(long id) {
+        List<Contact> contactList = new ArrayList<>();
+        final String READ_CONTACT = "SELECT * FROM contacts WHERE id = ?";
         try (Connection connection = getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement(READ_CONTACT);
             preparedStatement.setLong(1, id);
@@ -59,16 +54,19 @@ public class ContactDAO {
                     int idContact = resultSet.getInt("id");
                     String contact = resultSet.getString("contact");
                     String contact_type = resultSet.getString("contact_type");
-                    System.out.println("Contact ID: " + idContact + ", Contact: " + contact + ", Contact_type: "
-                            + contact_type);
+                    Contact contacts = new Contact(idContact, contact, contact_type);
+                    contactList.add(contacts);
                 }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return contactList;
     }
 
-    public void readAllContact() {
+    public List<Contact> readAllContact() {
+        List<Contact> contactsList = new ArrayList<>();
+        final String READ_ALL_CONTACT = "SELECT * FROM contacts";
         try (Connection connection = getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement(READ_ALL_CONTACT);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -76,15 +74,21 @@ public class ContactDAO {
                     int idContact = resultSet.getInt("id");
                     String contact = resultSet.getString("contact");
                     String contact_type = resultSet.getString("contact_type");
-                    System.out.println("Contact ID: " + idContact + ", Contact: " + contact + ", Contact_type: " + contact_type);
+                    Contact contacts = new Contact(idContact, contact, contact_type);
+                    contactsList.add(contacts);
+                    for(Contact cont : contactsList){
+                        System.out.println(cont);
+                    }
                 }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return contactsList;
     }
 
     public void updateContact(long id, String newContact, String newContactType) {
+        final String UPDATE_CONTACT = "UPDATE contacts SET contact = ?, contact_type = ? WHERE id = ?";
         try (Connection connection = getConnection()) {
 
             try (PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CONTACT)) {
@@ -105,6 +109,7 @@ public class ContactDAO {
     }
 
     public void deleteContact(long id) {
+        final String DELETE_CONTACT = "DELETE FROM contacts WHERE id = ?";
         try (Connection connection = getConnection()) {
             PreparedStatement preparedStatement = connection.prepareStatement(DELETE_CONTACT);
             preparedStatement.setLong(1, id);
